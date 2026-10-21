@@ -1,0 +1,28 @@
+<%- include('partials/header') %>
+<section class="hero">
+  <span class="eyebrow">CỘNG ĐỒNG HỌC TẬP & CHIA SẺ</span>
+  <h1>Nơi mọi ý tưởng được lắng nghe.</h1>
+  <p>Trao đổi kiến thức, đặt câu hỏi và kết nối cùng cộng đồng UniForum.</p>
+  <div class="hero-actions">
+    <a class="button" href="<%= currentUser ? '/topics/new' : '/register' %>"><%= currentUser ? '+ Mở cuộc thảo luận' : 'Tham gia diễn đàn' %></a>
+    <span>Diễn đàn dành cho tất cả mọi người</span>
+  </div>
+</section>
+<div class="section-heading"><div><span class="eyebrow">KHÁM PHÁ</span><h2>Chủ đề mới nhất</h2></div><span class="pill"><%= topics.length %> chủ đề</span></div>
+<% if (!topics.length) { %>
+  <div class="empty card"><div class="empty-icon">✦</div><h3>Chưa có chủ đề nào</h3><p>Hãy đăng ký hoặc đăng nhập để bắt đầu cuộc thảo luận đầu tiên.</p></div>
+<% } %>
+<div class="topic-list">
+<% for (const topic of topics) { %>
+  <article class="topic-card card">
+    <div class="avatar"><%= topic.username.slice(0,1).toUpperCase() %></div>
+    <div class="topic-content">
+      <a href="/topics/<%= topic.id %>" class="topic-link"><h3><%= topic.title %></h3></a>
+      <p><%= topic.description.length > 160 ? topic.description.slice(0,160) + '…' : topic.description %></p>
+      <div class="meta">Đăng bởi <strong><%= topic.username %></strong> · <%= new Date(topic.created_at).toLocaleString('vi-VN') %></div>
+    </div>
+    <span class="comment-count"><%= topic.post_count %> bài viết</span>
+  </article>
+<% } %>
+</div>
+<%- include('partials/footer') %>

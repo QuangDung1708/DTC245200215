@@ -1,0 +1,16 @@
+{
+  "uid": "uniforum-dashboard",
+  "title": "UniForum - Monitoring",
+  "tags": ["uniforum", "class-project"],
+  "schemaVersion": 40,
+  "version": 1,
+  "refresh": "10s",
+  "time": {"from": "now-30m", "to": "now"},
+  "panels": [
+    {"id": 1, "title": "Service UP (1 is healthy)", "type": "timeseries", "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "up", "legendFormat": "{{job}} - {{instance}}"}]},
+    {"id": 2, "title": "HTTP request rate", "type": "timeseries", "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "sum(rate(uniforum_http_requests_total[5m])) by (route)", "legendFormat": "{{route}}"}]},
+    {"id": 3, "title": "MySQL connections", "type": "timeseries", "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "mysql_global_status_threads_connected", "legendFormat": "MySQL connected threads"}]},
+    {"id": 4, "title": "Nginx connections", "type": "timeseries", "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "nginx_connections_active", "legendFormat": "Nginx active connections"}]},
+    {"id": 5, "title": "Container memory", "type": "timeseries", "gridPos": {"x": 0, "y": 16, "w": 24, "h": 8}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "targets": [{"expr": "sum by (name) (container_memory_working_set_bytes{name!=\"\"})", "legendFormat": "{{name}}"}]}
+  ]
+}

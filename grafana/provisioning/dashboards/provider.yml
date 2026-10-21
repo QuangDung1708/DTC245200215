@@ -1,0 +1,10 @@
+apiVersion: 1
+providers:
+  - name: UniForum
+    orgId: 1
+    folder: UniForum
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/dashboards

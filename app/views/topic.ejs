@@ -1,0 +1,25 @@
+<%- include('partials/header') %>
+<a class="back" href="/">← Tất cả chủ đề</a>
+<article class="topic-hero card"><span class="eyebrow">CUỘC THẢO LUẬN</span><h1><%= topic.title %></h1><p class="topic-desc"><%= topic.description %></p><div class="meta">Tạo bởi <strong><%= topic.username %></strong> · <%= new Date(topic.created_at).toLocaleString('vi-VN') %></div>
+<% if (canEdit(topic.user_id)) { %><form class="delete-form" method="post" action="/topics/<%= topic.id %>/delete"><button class="delete-button" type="submit">Xóa chủ đề</button></form><% } %>
+</article>
+<div class="section-heading"><h2>Bài viết (<%= posts.length %>)</h2></div>
+<% if (!posts.length) { %><div class="card empty"><h3>Chưa có bài viết</h3><p>Hãy là người chia sẻ đầu tiên!</p></div><% } %>
+<% for (const post of posts) { %>
+<article class="post card">
+<div class="post-header"><div class="avatar"><%= post.username.slice(0,1).toUpperCase() %></div><div><strong><%= post.username %></strong><div class="meta"><%= new Date(post.created_at).toLocaleString('vi-VN') %></div></div></div>
+<p class="post-body"><%= post.content %></p>
+<% if (canEdit(post.user_id)) { %><form class="delete-form" action="/posts/<%= post.id %>/delete" method="post"><button class="delete-button">Xóa bài viết</button></form><% } %>
+<div class="comments"><strong class="comments-label">Bình luận (<%= (commentsByPost[post.id] || []).length %>)</strong>
+<% for (const c of (commentsByPost[post.id] || [])) { %>
+<div class="comment"><div><strong><%= c.username %></strong> <span class="meta"><%= new Date(c.created_at).toLocaleString('vi-VN') %></span></div><p><%= c.content %></p>
+<% if (canEdit(c.user_id)) { %><form method="post" action="/comments/<%= c.id %>/delete"><button class="delete-button">Xóa bình luận</button></form><% } %></div>
+<% } %>
+<% if (currentUser) { %><form class="comment-form" method="post" action="/posts/<%= post.id %>/comments"><input name="content" required maxlength="1000" placeholder="Viết bình luận của bạn..."><button class="button button-small">Gửi</button></form><% } %>
+</div>
+</article>
+<% } %>
+<section class="card form-card add-post"><h2>Viết bài vào chủ đề</h2>
+<% if (currentUser) { %><form class="stack-form" method="post" action="/topics/<%= topic.id %>/posts"><label>Nội dung bài viết<textarea name="content" required rows="5" minlength="2" maxlength="8000" placeholder="Chia sẻ suy nghĩ hoặc câu trả lời của bạn..."></textarea></label><button class="button">Đăng bài</button></form><% } else { %><p><a href="/login">Đăng nhập</a> để viết bài và bình luận.</p><% } %>
+</section>
+<%- include('partials/footer') %>

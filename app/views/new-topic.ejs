@@ -1,0 +1,6 @@
+<%- include('partials/header') %>
+<div class="form-page"><a class="back" href="/">← Trở về danh sách</a><span class="eyebrow">BẮT ĐẦU THẢO LUẬN</span><h1>Tạo chủ đề mới</h1><p class="muted">Đặt câu hỏi hoặc chia sẻ một ý tưởng cùng cộng đồng.</p>
+<% if (error) { %><div class="notice error"><%= error %></div><% } %>
+<form action="/topics" method="post" class="stack-form card form-card"><label>Tiêu đề<input type="text" name="title" required minlength="5" maxlength="180" placeholder="Bạn muốn bàn luận điều gì?"></label><label>Mô tả chủ đề<textarea name="description" required minlength="10" maxlength="2000" rows="6" placeholder="Giới thiệu nội dung hoặc câu hỏi chính..."></textarea></label><button type="submit" class="button">Đăng chủ đề</button></form>
+</div>
+<%- include('partials/footer') %>

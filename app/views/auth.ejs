@@ -1,0 +1,16 @@
+<%- include('partials/header') %>
+<div class="auth-wrap card">
+  <span class="eyebrow">UNI FORUM</span>
+  <h1><%= mode === 'register' ? 'Tạo tài khoản' : 'Chào mừng trở lại' %></h1>
+  <p class="muted"><%= mode === 'register' ? 'Bắt đầu chia sẻ và kết nối cùng cộng đồng.' : 'Đăng nhập để viết bài và bình luận.' %></p>
+  <% if (typeof registered !== 'undefined' && registered) { %><div class="notice success">Đăng ký thành công! Hãy đăng nhập.</div><% } %>
+  <% if (error) { %><div class="notice error"><%= error %></div><% } %>
+  <form action="/<%= mode %>" method="post" class="stack-form">
+    <% if (mode === 'register') { %><label>Tên hiển thị<input name="username" required minlength="3" maxlength="50" placeholder="Ví dụ: nguyenvana"></label><% } %>
+    <label>Email<input type="email" name="email" required maxlength="190" autocomplete="email" placeholder="ban@example.com"></label>
+    <label>Mật khẩu<input type="password" name="password" required minlength="8" maxlength="128" autocomplete="<%= mode === 'register' ? 'new-password' : 'current-password' %>" placeholder="Tối thiểu 8 ký tự"></label>
+    <button type="submit" class="button full"><%= mode === 'register' ? 'Đăng ký tài khoản' : 'Đăng nhập' %></button>
+  </form>
+  <p class="auth-switch"><%= mode === 'register' ? 'Đã có tài khoản?' : 'Bạn chưa có tài khoản?' %> <a href="/<%= mode === 'register' ? 'login' : 'register' %>"><%= mode === 'register' ? 'Đăng nhập' : 'Đăng ký ngay' %></a></p>
+</div>
+<%- include('partials/footer') %>

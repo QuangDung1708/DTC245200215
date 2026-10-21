@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="UniForum - Diễn đàn học tập và trao đổi cộng đồng">
+  <title><%= title %> | <%= siteName %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav container">
+      <a class="logo" href="/">Uni<span>Forum</span></a>
+      <div class="nav-links">
+        <a href="/">Chủ đề</a>
+        <% if (currentUser) { %>
+          <span class="user-chip">Xin chào, <strong><%= currentUser.username %></strong></span>
+          <a class="button button-small" href="/topics/new">+ Tạo chủ đề</a>
+          <form action="/logout" method="post" class="inline-form"><button class="button button-outline button-small" type="submit">Đăng xuất</button></form>
+        <% } else { %>
+          <a href="/login">Đăng nhập</a>
+          <a class="button button-small" href="/register">Đăng ký</a>
+        <% } %>
+      </div>
+    </nav>
+  </header>
+  <main class="container page">

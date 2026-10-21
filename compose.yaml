@@ -1,0 +1,184 @@
+name: uniforum
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_EXPORTER_PASSWORD: ${MYSQL_EXPORTER_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+      - ./db/20-exporter.sh:/docker-entrypoint-initdb.d/20-exporter.sh:ro
+    networks: [database]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 35s
+
+  web:
+    build: ./app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      SESSION_SECRET: ${SESSION_SECRET}
+    read_only: true
+    tmpfs: [/tmp]
+    volumes:
+      - app_logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [frontend, database, monitoring]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - nginx_logs:/shared-logs
+    depends_on:
+      web:
+        condition: service_healthy
+    networks: [frontend]
+
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 10M
+    ports:
+      - "127.0.0.1:8081:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [frontend, database]
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.5.1
+    restart: unless-stopped
+    command: ["--nginx.scrape-uri=http://nginx:8080/nginx_status"]
+    depends_on: [nginx]
+    networks: [frontend, monitoring]
+
+  mysql-exporter:
+    image: prom/mysqld-exporter:v0.17.2
+    restart: unless-stopped
+    environment:
+      MYSQLD_EXPORTER_PASSWORD: ${MYSQL_EXPORTER_PASSWORD}
+    command: ["--mysqld.address=db:3306", "--mysqld.username=exporter"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [database, monitoring]
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.60.6
+    restart: unless-stopped
+    command:
+      - "--containerd=/rootfs/run/snap.docker/containerd/containerd.sock"
+      - "--containerd-namespace=moby"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - ${DOCKER_ROOT_DIR:-/var/lib/docker}:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [monitoring]
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    restart: unless-stopped
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus"]
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    depends_on: [web, nginx-exporter, mysql-exporter, cadvisor]
+    networks: [frontend, monitoring]
+
+  loki-init:
+    image: alpine:3.21
+    restart: 'no'
+    command: ["sh", "-c", "mkdir -p /tmp/loki/chunks /tmp/loki/rules && chown -R 10001:10001 /tmp/loki"]
+    volumes:
+      - loki_data:/tmp/loki
+
+  loki:
+    image: grafana/loki:3.4.2
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/config.yml"]
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml:ro
+      - loki_data:/tmp/loki
+    depends_on:
+      loki-init:
+        condition: service_completed_successfully
+    networks: [monitoring]
+
+  promtail:
+    # Promtail meets this assignment's requirement but reached EOL in March 2026.
+    image: grafana/promtail:3.4.2
+    restart: unless-stopped
+    command: ["-config.file=/etc/promtail/config.yml"]
+    volumes:
+      - ./promtail/config.yml:/etc/promtail/config.yml:ro
+      - app_logs:/logs/app:ro
+      - nginx_logs:/logs/nginx:ro
+    depends_on: [loki, web, nginx]
+    networks: [monitoring]
+
+  grafana:
+    image: grafana/grafana:11.6.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+    depends_on: [prometheus, loki]
+    networks: [frontend, monitoring]
+
+networks:
+  frontend:
+    driver: bridge
+  database:
+    driver: bridge
+    internal: true
+  monitoring:
+    driver: bridge
+    internal: true
+
+volumes:
+  mysql_data:
+  app_logs:
+  nginx_logs:
+  prometheus_data:
+  grafana_data:
+  loki_data:
