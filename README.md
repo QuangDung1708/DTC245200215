@@ -10,6 +10,46 @@
 - Port `8080`, `8081`, `3001`, `9090` chưa phát hiện bị dùng tại lúc kiểm tra.
 - Máy ảo có ~5.2 GiB RAM; **khởi động theo giai đoạn** để giảm nguy cơ quá tải.
 - Giữ nguyên các container bài tập cũ (`postgres_db`, `mysql_db`, `nginx_proxy`), không dùng `docker system prune --volumes` hay `docker compose down -v` nếu chưa hiểu hậu quả.
+## Cài đặt trực tiếp từ GitHub (khuyến nghị)
+Mã nguồn UniForum được quản lý tại:
+https://github.com/QuangDung1708/DTC245200215
+
+### 1. Tải mã nguồn trên Ubuntu
+
+```bash
+mkdir -p ~/projects
+cd ~/projects
+git clone https://github.com/QuangDung1708/DTC245200215.git
+cd DTC245200215
+```
+
+### 2. Cấu hình môi trường
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Thay các mật khẩu mẫu bằng mật khẩu mạnh trước khi
+chạy hệ thống. Không đưa file .env lên GitHub.
+
+### 3. Khởi chạy hệ thống
+
+```bash
+docker compose config --quiet
+docker compose up -d --build
+docker compose ps
+```
+
+### 4. Truy cập các dịch vụ
+
+- Website: http://localhost:8080
+- phpMyAdmin: http://localhost:8081
+- Grafana: http://localhost:3001
+- Prometheus: http://localhost:9090
+
+Lưu ý: Các lệnh trên áp dụng cho một môi trường
+Ubuntu mới, chưa có thư mục DTC245200215.
 
 ## A. Đưa file vào Ubuntu, giải nén
 
